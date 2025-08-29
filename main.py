@@ -22,7 +22,7 @@ with open("superthemes.yaml", "r", encoding="utf-8") as f:
     superthemes = yaml.safe_load(f)
 with open("datasets.yaml","r",encoding="utf-8") as f:
     av_datasets = yaml.safe_load(f)
-
+"""
 def guardar_suscripcion_tema(user_id: int, tema: str):
     db = SessionLocal()
     try:
@@ -51,7 +51,7 @@ def guardar_suscripcion_dataset(user_id: int, dataset: str):
     finally:
         db.close()
 
-
+"""
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(
@@ -62,7 +62,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
              "por dataset 📊 o temática 🗂️ a través de los comandos 'suscribir_dataset' y 'suscribir_tema'",
         parse_mode='HTML'
     )
-
+"""
 async def temas_disponibles (update: Update, context: ContextTypes.DEFAULT_TYPE):
     formatted_themes = "\n".join([f"• {theme}" for theme in superthemes])
     await context.bot.send_message(
@@ -104,19 +104,19 @@ async def suscribir_dataset(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await context.bot.send_message(chat_id=user_id,
                                        text="¡URL no válida!, debe empezar por datos.gob.ar/dataset/.")
-
+"""
 
 if __name__ == '__main__':
-    engine = create_engine(database_url, echo=True)
-    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    Base.metadata.create_all(bind=engine)
+    #engine = create_engine(database_url, echo=True)
+    #SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    #Base.metadata.create_all(bind=engine)
     application = ApplicationBuilder().token(bot_token).build()
     start_handler = CommandHandler('start', start)
-    tema_handler = CommandHandler('suscribir_tema',suscribir_tema)
-    tema_disp_handler = CommandHandler('temas_disponibles',temas_disponibles)
-    dataset_handler = CommandHandler('suscribir_dataset',suscribir_dataset)
+    #tema_handler = CommandHandler('suscribir_tema',suscribir_tema)
+    #tema_disp_handler = CommandHandler('temas_disponibles',temas_disponibles)
+    #dataset_handler = CommandHandler('suscribir_dataset',suscribir_dataset)
     application.add_handler(start_handler)
-    application.add_handler(tema_disp_handler)
-    application.add_handler(tema_handler)
-    application.add_handler(dataset_handler)
+    #application.add_handler(tema_disp_handler)
+    #application.add_handler(tema_handler)
+    #application.add_handler(dataset_handler)
     application.run_polling()

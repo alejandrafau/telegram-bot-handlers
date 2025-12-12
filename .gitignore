@@ -1,0 +1,35 @@
+# -------------------------
+# PyCharm / IntelliJ IDEA
+# -------------------------
+.idea/
+*.iml
+
+# -------------------------
+# Python cache
+# -------------------------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Bytecode compiled in build directories
+*.egg-info/
+*.eggs/
+build/
+dist/
+
+# -------------------------
+# Virtual environments
+# -------------------------
+env/
+venv/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# -------------------------
+# Miscellaneous
+# -------------------------
+.DS_Store
+*.log

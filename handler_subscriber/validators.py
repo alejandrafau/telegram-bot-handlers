@@ -1,6 +1,8 @@
 from urllib.parse import urlparse
 
 
+
+
 def extract_dataset_from_url(url):
 
     parsed = urlparse(url)
@@ -29,5 +31,10 @@ def valid_dataset(url):
     except:
         return False
 
-def dataset_exists(dataset,av_datasets):
-   pass
+
+def valid_nodo(input, nodos):
+    if input.lower() in nodos:
+        return True
+    else:
+        return False
+

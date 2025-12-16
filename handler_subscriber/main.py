@@ -88,6 +88,8 @@ async def eliminar_suscripcion_tema_base(user_id: int, tema: str) -> bool:
 
 
 async def eliminar_suscripcion_dataset_base(user_id: int, dataset: str) -> bool:
+    av_datasets = load_datasets()
+
     db = SessionLocal()
     try:
         suscripcion = (
@@ -191,6 +193,7 @@ async def guardar_suscripcion_dataset(user_id: int, dataset: str):
 # -------------------------------
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    print(update.effective_chat.id)
     await context.bot.send_message(
         chat_id=update.effective_chat.id,
         text=(
@@ -205,8 +208,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "Necesitás contar con una URL válida del mismo. Así recibirás notificaciones "
             "de nuevos recursos o datos que se le agreguen.\n\n"
             "🗑️ - Podés consultar o borrar todas tus suscripciones con /mis_suscripciones, "
-            "/eliminar_suscripcion_nodo, /eliminar_suscripcion_tema, "
-            "/eliminar_suscripcion_dataset o simplemente /eliminar_todas."
+            "/eliminar_nodo, /eliminar_tema, "
+            "/eliminar_dataset o simplemente /eliminar_todas."
         ),
         parse_mode='HTML'
     )
@@ -361,7 +364,8 @@ async def eliminar_suscripcion_dataset(update: Update, context: ContextTypes.DEF
     if await eliminar_suscripcion_dataset_base(user_id, dataset):
         msg = f"🗑️ Suscripción al dataset '{dataset}' eliminada."
     else:
-        msg = f"⚠️ No se pudo eliminar tu suscripción al dataset {dataset}"
+        msg = (f"⚠️ No se pudo eliminar tu suscripción al dataset {dataset}.Para eliminar"
+               f"es necesario usar el id del dataset, lo podés consultar en /mis_suscripciones")
     await context.bot.send_message(chat_id=user_id, text=msg)
 
 
@@ -390,9 +394,9 @@ if __name__ == '__main__':
     nodo_handler = CommandHandler('suscribir_nodo',suscribir_nodo)
     nodo_disp_handler = CommandHandler('nodos_disponibles',nodos_disponibles)
     misuscri_handler = CommandHandler('mis_suscripciones',mis_suscripciones)
-    er_nodo_handler = CommandHandler('eliminar_suscripcion_nodo', eliminar_suscripcion_nodo)
-    er_tema_handler = CommandHandler('eliminar_suscripcion_tema', eliminar_suscripcion_tema)
-    er_dataset_handler = CommandHandler('eliminar_suscripcion_dataset', eliminar_suscripcion_dataset)
+    er_nodo_handler = CommandHandler('eliminar_nodo', eliminar_suscripcion_nodo)
+    er_tema_handler = CommandHandler('eliminar_tema', eliminar_suscripcion_tema)
+    er_dataset_handler = CommandHandler('eliminar_dataset', eliminar_suscripcion_dataset)
     er_all = CommandHandler('eliminar_todas', eliminar_todas)
     application.add_handler(start_handler)
     application.add_handler(tema_disp_handler)

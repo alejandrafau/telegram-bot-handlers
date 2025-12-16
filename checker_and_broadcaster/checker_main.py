@@ -4,6 +4,7 @@ import os
 import logging
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+import asyncio
 
 
 sender_email = os.getenv("EMAIL_SENDER")
@@ -15,6 +16,16 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
+
+async def message_sending(broadcaster):
+    try:
+        await broadcaster.send_new_dataset_message()
+        await broadcaster.send_new_distribution_message()
+        await broadcaster.send_new_datapoint_message()
+    except Exception as e:
+        raise e
+
+
 
 if __name__ == '__main__':
     db_engine = create_engine(database_url, echo=True)
@@ -43,9 +54,7 @@ try:
     broadcaster.db_engine = db_engine
     broadcaster.db_session = SessionLocal()
     broadcaster.set_events(events)
-    broadcaster.send_new_dataset_message()
-    broadcaster.send_new_distribution_message()
-    broadcaster.send_new_datapoint_message()
+    asyncio.run(message_sending(broadcaster))
     pers_directory = broadcaster.persistance_directory
     error_path = os.path.join(pers_directory, "error_report.csv")
     message = "Datob parseó y mandó notificaciones correctamente"

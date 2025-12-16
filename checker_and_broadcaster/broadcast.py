@@ -53,10 +53,12 @@ class Broadcaster():
         """
         Escapa caracteres especiales de MarkdownV2
         """
+        if text is None or text == "":
+            return ""
         return re.sub(r'([_*\[\]()~`>#+\-=|{}.!])', r'\\\1', text)
 
 
-    def send_new_dataset_message(self):
+    async def send_new_dataset_message(self):
         """Envia mensaje de nuevo dataset a suscriptores de tema y nodo al que pertenece el dataset"""
         if not self.events:
             return
@@ -84,9 +86,9 @@ class Broadcaster():
                     for users in nodo_subs + theme_subs:
                         total_subs.update(users)
                     if total_subs:
-                        asyncio.run(self.send_update(total_subs, message))
+                        await self.send_update(total_subs, message)
 
-    def send_new_distribution_message(self):
+    async def send_new_distribution_message(self):
         """Envia mensaje de nuevo recurso a suscriptores de tema, nodo o dataset al que pertenece el recurso"""
         if not self.events:
             return
@@ -96,13 +98,13 @@ class Broadcaster():
                 distributions = distri_event["distribution_id"].unique().tolist()
                 for distri in distributions:
                     df = distri_event.loc[distri_event["distribution_id"]==distri]
-                    name = df["distribution_name"]
+                    name = self.escape_markdown(df["distribution_name"].iloc[0])
                     nodos = df['nodo_alias'].unique().tolist()
                     themes = df['temas_alias'].unique().tolist()
-                    dataset_id = df['dataset_id'].unique()
+                    dataset_id = df['dataset_id'].iloc[0]
                     maintainer = self.escape_markdown(df["maintainer"].iloc[0])
                     dataset_title = self.escape_markdown(df["dataset_title"].iloc[0])
-                    url = df["url"]
+                    url = df["url"].iloc[0]
                     message = f"{maintainer} publicó un nuevo recurso: [{name}]({url}) dentro del dataset {dataset_title}"
                     nodo_subs = []
                     theme_subs =[]
@@ -120,9 +122,9 @@ class Broadcaster():
                         total_subs.update(users)
                     total_subs.update(data_sub)
                     if total_subs:
-                        asyncio.run(self.send_update(total_subs, message))
+                        await self.send_update(total_subs, message)
 
-    def send_new_datapoint_message(self):
+    async def send_new_datapoint_message(self):
         if not self.events:
             return
         else:
@@ -131,14 +133,14 @@ class Broadcaster():
                 distributions = dp_event["distribution_id"].unique().tolist()
                 for distri in distributions:
                     df = dp_event.loc[dp_event["distribution_id"]==distri]
-                    name = df["distribution_name"]
-                    dataset_id = df["dataset_id"]
+                    name = self.escape_markdown(df["distribution_name"].iloc[0])
+                    dataset_id = df["dataset_id"].iloc[0]
                     maintainer = self.escape_markdown(df["maintainer"].iloc[0])
                     dataset_title = self.escape_markdown(df["dataset_title"].iloc[0])
                     url = df["url"].iloc[0]
                     message = f"{maintainer} agregó nuevos datos al recurso [{name}]({url}) dentro del dataset {dataset_title}"
                     total_subs = self.get_users_by_dataset(dataset_id)
-                    asyncio.run(self.send_update(total_subs,message))
+                    await self.send_update(total_subs,message)
 
     async def send_update(self, total_subs, message):
         bot = self.bot
@@ -151,6 +153,8 @@ class Broadcaster():
                 )
             except Exception as e:
                 logger.error(f"Failed to send message to {user_id}: {e}")
+                raise e
+
 
     def send_email_report(self,sender_email, sender_password, recipient_email, subject, body, attachment_paths=None):
         msg = EmailMessage()

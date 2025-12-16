@@ -23,8 +23,10 @@ class Parser:
       base_dir = os.path.dirname(os.path.abspath(__file__))
       self.persistance_directory = os.path.join(base_dir, "..", "assets")
       os.makedirs(self.persistance_directory, exist_ok=True)
-      self.missing_dataset_ids = self._get_missing_ids()
-      self.missing_dataset_titles = self._get_missing_titles()
+      self.missing_dataset_ids = self._get_missing_ids("missings.json")
+      self.missing_dataset_titles = self._get_missing_titles("missings.json")
+      self.missing_distri_ids = self._get_missing_ids("missings_distri.json")
+      self.missing_distri_titles = self._get_missing_titles("missings_distri.json")
       self.connection_errors = None
       self.parseable_datasets = self._fetch_datasets_to_parse()
       self.previous_state = self._get_previous_state()
@@ -49,26 +51,26 @@ class Parser:
           logger.error("No se pudo conectar con la tabla SuscripcionDataset para buscar datasets a parsear")
           return []
 
-   def _get_missing_ids(self):
+   def _get_missing_ids(self,path):
       try:
-         missing_path = os.path.join(self.persistance_directory,"missings.json")
+         missing_path = os.path.join(self.persistance_directory,path)
          missing = utils.read_json(missing_path)
          missing_ids = list(missing.keys())
          return missing_ids
       except:
          return []
 
-   def _get_missing_titles(self):
+   def _get_missing_titles(self,path):
       try:
-         missing_path = os.path.join(self.persistance_directory,"missings.json")
+         missing_path = os.path.join(self.persistance_directory,path)
          missing = utils.read_json(missing_path)
          missing_titles = list(missing.values())
          return missing_titles
       except:
          return []
 
-   def _update_missings(self, found_ids, found_titles):
-       missing_path = os.path.join(self.persistance_directory, "missings.json")
+   def _update_missings(self, found_ids, found_titles,path):
+       missing_path = os.path.join(self.persistance_directory, path)
        if os.path.exists(missing_path):
            missing = utils.read_json(missing_path)
        else:
@@ -162,6 +164,9 @@ class Parser:
            raise e
 
    def _get_dataset_events(self):
+      """Descripcion: Compara el estado anterior y el actual y busca datasets nuevos que no esten
+      en missings (datasets que estaban faltantes temporalmente)
+        Returns: devuelve un dataframe de pandas o None """
       final_updates = None
       if self.previous_state and self.current_state:
             prev_datasets = list(self.previous_state.get('data', {}).keys())
@@ -197,7 +202,7 @@ class Parser:
                found_ids = set(dataset_updates["dataset_id"].tolist())
                found_titles = set(dataset_updates["dataset_title"].tolist())
 
-               self._update_missings(found_ids, found_titles)
+               self._update_missings(found_ids, found_titles,"missings.json")
 
 
             if len(absent_datasets)>0:
@@ -217,6 +222,10 @@ class Parser:
       return final_updates
 
    def _get_distribution_events(self):
+      """Descripcion: Compara el estado anterior y el actual y busca distribuciones nuevas siempre
+      y cuando estas no sean parte de datasets nuevos o no sean parte de datasets que reaparecieron
+      (que no son nuevos pero estaban faltantes temporalmente)
+      Returns: devuelve un dataframe de pandas o None """
       final_dist_updates = None
       if self.previous_state and self.current_state:
 
@@ -232,6 +241,7 @@ class Parser:
             ]
 
             new_distributions = list(set(curr_distributions) - set(prev_distributions))
+            absent_distri = list(set(prev_distributions)-set(curr_distributions))
 
             if len(new_distributions)>0:
                rows = []
@@ -270,6 +280,12 @@ class Parser:
 
                final_dist_updates = distribution_updates.explode("temas_alias", ignore_index=True)
 
+
+            if len(absent_distri)>0:
+
+
+
+
       return final_dist_updates
 
    def _get_raw_state(self):
@@ -291,6 +307,9 @@ class Parser:
          raise e
 
    def _get_datapoint_events(self):
+      """Descripcion: Compara el tamaño de estado previo contra el estado actual. Si la distribución
+      no estaba en el estado previo(es nueva) o si su tamaño era None, no es incorporada en los datapoint events
+      Returns: devuelve un dataframe de pandas o None """
       if self.previous_state and self.current_state:
          prev_distributions = [
             element
